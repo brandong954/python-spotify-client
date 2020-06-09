@@ -2,7 +2,7 @@ import string
 import random
 import base64
 import os
-from lib.helpers import make_request
+from lib.helpers import make_request, get_json_from_response
 from datetime import datetime, timedelta
 from lib.logger import log, log_error, log_info, log_debug, log_verbose, log_success
 from flask import url_for, redirect, request
@@ -156,7 +156,7 @@ class SpotifyUser:
         log_debug("Request Data: %s" % data)
 
         response = make_request(SPOTIFY_TOKEN_API_ENDPOINT, method="POST", headers=headers, data=data)
-        response_obj = response.json()
+        response_obj = get_json_from_response(response)
 
         if response.status_code != 200:
             error_message = "Unable to get Spotify user token!"
@@ -198,7 +198,7 @@ class SpotifyUser:
     def set_spotify_user_object(self):
         headers = {'Authorization': "%s %s" % (self.token_type, self.access_token)}
         response = make_request("%s/me" % SPOTIFY_API_URI, headers=headers)
-        response_obj = response.json()
+        response_obj = get_json_from_response(response)
 
         if response.status_code != 200:
             error_message="Unable to get Spotify user info!"
@@ -222,7 +222,7 @@ class SpotifyUser:
         # The response body contains a snapshot_id in JSON format. The snapshot_id can be used to identify your playlist version in 
         # future requests. On error, the header status code is an error code and the response body contains an error object. T
         response = make_request(url, method="POST", headers=headers, data=data)
-        response_obj = response.json()
+        response_obj = get_json_from_response(response)
 
         if response.status_code != 201:
             raise Exception("Failed to add tracks to playlist: %s" % response_obj)
@@ -239,7 +239,7 @@ class SpotifyUser:
 
         # response will be the created playlist object if success, otherwise it will be an error object
         response = make_request(url, method="POST", headers=headers, data=data)
-        response_obj = response.json()
+        response_obj = get_json_from_response(response)
 
         if response.status_code != 200 and response.status_code != 201:
             raise Exception("Failed to create playlist: %s" % response_obj)
@@ -255,7 +255,7 @@ class SpotifyUser:
 
         # response will be the playlist object if success, otherwise it will be an error object
         response = make_request(url, headers=headers)
-        response_obj = response.json()
+        response_obj = get_json_from_response(response)
 
         if response.status_code != 200:
             raise Exception("Failed to get playlist '%s': %s" % (playlist_id, response_obj))
@@ -271,7 +271,7 @@ class SpotifyUser:
 
         while url is not None:
             response = make_request(url, headers=headers)
-            response_obj = response.json()
+            response_obj = get_json_from_response(response)
 
             if response.status_code != 200:
                 error_message="Unable to get Spotify user's playlists!"
@@ -311,7 +311,7 @@ class SpotifyUser:
 
         while url is not None and len(tracks) < limit:
             response = make_request(url, headers=headers)
-            response_obj = response.json()
+            response_obj = get_json_from_response(response)
 
             if response.status_code != 200:
                 error_message="Unable to get tracks for playlist!"
@@ -350,7 +350,7 @@ class SpotifyUser:
         log_debug("Deleting tracks from playlist '%s': %s" % (playlist_id, data))
 
         response = make_request(url, method="DELETE", headers=headers, data=data)
-        response_obj = response.json()
+        response_obj = get_json_from_response(response)
 
         if response.status_code != 200:
             error_message="Unable to delete tracks from playlist!"
@@ -370,7 +370,7 @@ class SpotifyUser:
         response = make_request(url, method="DELETE", headers=headers)
 
         if response.status_code != 200:
-            response_obj = response.json()
+            response_obj = get_json_from_response(response)
             error_message="Unable to unfollow playlist!"
             raise Exception("%s\n%s" % (error_message, response_obj))
 
@@ -380,7 +380,7 @@ class SpotifyUser:
         url = "%s/artists/%s" % (SPOTIFY_API_URI, artist_id)
 
         response = make_request(url, headers=headers)
-        response_obj = response.json()
+        response_obj = get_json_from_response(response)
 
         if response.status_code != 200:
             error_message="Unable to get artist info for '%s'!" % artist_id
