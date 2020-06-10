@@ -143,14 +143,18 @@ class SpotifyUser:
 
     def set_access_token(self):
         headers = {'Authorization': "Basic %s" % SPOTIFY_AUTHORIZATION}
+        grant_type_data_key = 'grant_type'
+        refresh_token_grant_type = 'refresh_token'
+        authorization_code_grant_type = 'authorization_code'
+        client_credentials_grant_type = 'client_credentials'
 
         if self.refresh_token:
-            data = {'grant_type':'refresh_token', 'refresh_token':self.refresh_token}
+            data = {grant_type_data_key:refresh_token_grant_type, 'refresh_token':self.refresh_token}
         elif self.code:
             # No redirection actually occurs, but Spotify uses it for validation purposes.
-            data = {'grant_type':'authorization_code', 'code':self.code, 'redirect_uri':SPOTIFY_CALLBACK_URL}
+            data = {grant_type_data_key:authorization_code_grant_type, 'code':self.code, 'redirect_uri':SPOTIFY_CALLBACK_URL}
         else:
-            data = {'grant_type':'client_credentials'}
+            data = {grant_type_data_key:client_credentials_grant_type}
 
         log_debug("Request Header: %s" % headers)
         log_debug("Request Data: %s" % data)
@@ -170,9 +174,9 @@ class SpotifyUser:
             self.access_token = response_obj['access_token']
             self.token_type = response_obj['token_type']
             self.expiration_date = datetime.now() + timedelta(seconds=response_obj['expires_in'])
-            if self.code or self.refresh_token:
+            if data[grant_type_data_key] != client_credentials_grant_type:
                 self.scope = response_obj['scope']
-            if self.code:
+            if data[grant_type_data_key] == authorization_code_grant_type:
                 self.refresh_token = response_obj['refresh_token']
         except KeyError as key_error:
             error_message = "Unable to authorize user due to missing key %s in response." % key_error
