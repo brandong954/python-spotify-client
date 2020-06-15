@@ -234,7 +234,7 @@ class SpotifyUser:
         return response_obj
 
     @_validate_access_token
-    def create_playlist(self, name, description="Playlist created by Spotify Playlist Manager. https://github.com/brandong954/scripts"):
+    def create_playlist(self, name, description=""):
         headers = {'Authorization': "%s %s" % (self.token_type, self.access_token), 'Content-Type': 'application/json'}
         data = {'name': name, 'description': description}
         url = "%s/users/%s/playlists" % (SPOTIFY_API_URI, self.get_id())
@@ -391,9 +391,12 @@ class SpotifyUser:
             raise Exception("%s\n%s" % (error_message, response_obj))
 
         try:
+            artist_name = response_obj['name']
             spotify_artist_genres = response_obj['genres']
         except KeyError as key_error:
             error_message="Unable to get spotify_artist_genres for artist_id '%s' due to missing key %s in response." % (artist_id, key_error)
             raise Exception(error_message)
 
-        return spotify_artist_genres
+        log_debug("Spotify genres for artist '%s': %s" %  (artist_name, spotify_artist_genres))
+
+        return set(spotify_artist_genres)
