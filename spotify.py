@@ -4,7 +4,7 @@ import base64
 import os
 from lib.helpers import make_request, get_json_from_response
 from datetime import datetime, timedelta
-from lib.logger import log, log_error, log_info, log_debug, log_verbose, log_success
+from lib.logger import log, log_error, log_debug, log_verbose, log_success
 from flask import url_for, redirect, request
 
 SPOTIFY_CLIENT_ID = None
@@ -66,6 +66,55 @@ def spotify_callback():
     return redirect(SPOTIFY_AUTH_REDIRECT_URL)
 
 # TODO keys need try/except logic so we can see when they change easily instead of just using ".get()"
+# We should be settting up class params for them as well instead of getting them on the fly from the returned spotify object.
+# After doing so, refactor the functions where these get instantiated as objects to not contain the various
+# try/except logic.
+class SpotifyArtist:
+    spotify_artist_object = None
+
+    def __init__(self, spotify_artist_object):
+        self.spotify_artist_object = spotify_artist_object
+
+    def get_uri(self):
+        return self.spotify_artist_object['uri']
+
+    def get_name(self):
+        return self.spotify_artist_object['name']
+
+    def get_id(self):
+        return self.spotify_artist_object['id']
+
+    def get_genres(self):
+        spotify_artist_genres = set(self.spotify_artist_object['genres'])
+        return spotify_artist_genres
+
+class SpotifyAlbum:
+    spotify_album_object = None
+
+    def __init__(self, spotify_album_object):
+        self.spotify_album_object = spotify_album_object
+
+    def get_uri(self):
+        return self.spotify_album_object['uri']
+
+    def get_name(self):
+        return self.spotify_album_object['name']
+
+    def get_id(self):
+        return self.spotify_album_object['id']
+
+    def get_popularity(self):
+        return self.spotify_album_object['popularity']
+
+    def get_type(self):
+        return self.spotify_album_object['album_type']
+
+    def get_genres(self):
+        spotify_album_genres = self.spotify_album_object['genres']
+        log_debug("Spotify genres for album '%s': %s" %  (self.get_name(), spotify_album_genres))
+        return spotify_album_genres
+
+# TODO keys need try/except logic so we can see when they change easily instead of just using ".get()"
 class SpotifyTrack:
     spotify_track_object = None
 
@@ -90,8 +139,11 @@ class SpotifyTrack:
     def get_artist_id(self):
         return self.spotify_track_object['artists'][0]['id']
 
-    def get_album_name(self):
-        return self.spotify_track_object['album']['name']
+    def get_album(self):
+        return SpotifyAlbum(self.spotify_track_object['album'])
+
+    def get_popularity(self):
+        return self.spotify_track_object['popularity']
 
 # TODO keys need try/except logic so we can see when they change easily instead of just using ".get()"
 class SpotifyPlaylist:
@@ -251,6 +303,72 @@ class SpotifyUser:
         return SpotifyPlaylist(response_obj)
 
     @_validate_access_token
+    def get_artist(self, artist_id):
+        headers = {'Authorization': "%s %s" % (self.token_type, self.access_token)}
+        url = "%s/artists/%s" % (SPOTIFY_API_URI, artist_id)
+
+        log_verbose("Getting artist: %s" % artist_id)
+
+        # response will be the artist object if success, otherwise it will be an error object
+        response = make_request(url, headers=headers)
+        response_obj = get_json_from_response(response)
+
+        if response.status_code == 404:
+            log_debug("Unable to locate Spotify artist for artist_id '%s'! %s" % (artist_id, response_obj))
+        elif response.status_code != 200:
+            raise Exception("Failed to get artist '%s': %s" % (artist_id, response_obj))
+
+        return SpotifyArtist(response_obj)
+
+    @_validate_access_token
+    def get_artist_albums(self, artist_id):
+        albums = []
+        limit = 50
+        headers = {'Authorization': "%s %s" % (self.token_type, self.access_token)}
+        url = "%s/artists/%s/albums?limit=%d&include_groups=album" % (SPOTIFY_API_URI, artist_id, limit)
+
+        log_debug("Getting Spotify albums for '%s'..." % artist_id)
+
+        while url is not None:
+            response = make_request(url, headers=headers)
+            response_obj = get_json_from_response(response)
+
+            if response.status_code != 200:
+                error_message="Unable to get albums for artist_id '%s'!" % artist_id
+                raise Exception("%s\n%s" % (error_message, response_obj))
+
+            log_verbose("Spotify's response: %s" % response_obj)
+
+            try:
+                items = response_obj["items"]
+                for item in items:
+                    albums.append(self.get_album(item['id']))
+                url = response_obj['next']
+            except KeyError as key_error:
+                error_message="Unable to get artist's albums due to missing key %s in response." % key_error
+                raise Exception(error_message)
+
+        log_verbose(albums)
+
+        return albums
+
+    @_validate_access_token
+    def get_album(self, album_id):
+        headers = {'Authorization': "%s %s" % (self.token_type, self.access_token)}
+        url = "%s/albums/%s" % (SPOTIFY_API_URI, album_id)
+
+        log_verbose("Getting album: %s" % album_id)
+
+        # response will be the album object if success, otherwise it will be an error object
+        response = make_request(url, headers=headers)
+        response_obj = get_json_from_response(response)
+
+        if response.status_code != 200:
+            raise Exception("Failed to get album '%s': %s" % (album_id, response_obj))
+
+        return SpotifyAlbum(response_obj)
+
+    @_validate_access_token
     def get_playlist(self, playlist_id):
         headers = {'Authorization': "%s %s" % (self.token_type, self.access_token)}
         url = "%s/playlists/%s" % (SPOTIFY_API_URI, playlist_id)
@@ -379,24 +497,94 @@ class SpotifyUser:
             raise Exception("%s\n%s" % (error_message, response_obj))
 
     @_validate_access_token
-    def get_spotify_artist_genres(self, artist_id):
+    def get_most_popular_artist(self, artist_name):
+        most_popular_spotify_artist = None
         headers = {'Authorization': "%s %s" % (self.token_type, self.access_token)}
-        url = "%s/artists/%s" % (SPOTIFY_API_URI, artist_id)
+        url = "%s/search?q=\"%s\"&type=artist&limit=50" % (SPOTIFY_API_URI, artist_name)
 
+        while url is not None:
+            response = make_request(url, headers=headers)
+            response_obj = get_json_from_response(response)
+
+            if response.status_code != 200:
+                error_message="Unable to queary Spotify for artists!"
+                raise Exception("%s\n%s" % (error_message, response_obj))
+
+            log_verbose("Spotify's response: %s" % response_obj)
+
+            # popularity can be 0 for an artist
+            max_popularity_count = -1
+            try:
+                artists = response_obj["artists"]
+                for artist in artists['items']:
+                    if artist['name'] == artist_name and artist['popularity'] > max_popularity_count:
+                        most_popular_spotify_artist = SpotifyArtist(artist)
+                url = response_obj['next']
+            except KeyError as key_error:
+                error_message="Unable to get most popular Spotify artist for '%s' due to missing key %s in response." % (artist_name, key_error)
+                raise Exception(error_message)
+
+        if not most_popular_spotify_artist:
+            log_debug("Unable to find a popular Spotify artist for '%s'." % artist_name)
+
+        return most_popular_spotify_artist
+
+    @_validate_access_token
+    def get_artist_top_tracks(self, artist_id):
+        top_tracks =[]
+        headers = {'Authorization': "%s %s" % (self.token_type, self.access_token)}
+        url = "%s/artists/%s/top-tracks?country=us" % (SPOTIFY_API_URI, artist_id)
         response = make_request(url, headers=headers)
         response_obj = get_json_from_response(response)
 
         if response.status_code != 200:
-            error_message="Unable to get artist info for '%s'!" % artist_id
+            error_message="Unable to queary Spotify for artists' top tracks!"
             raise Exception("%s\n%s" % (error_message, response_obj))
 
+        log_verbose("Spotify's response: %s" % response_obj)
+
+        # popularity can be 0 for an artist
+        max_popularity_count = -1
         try:
-            artist_name = response_obj['name']
-            spotify_artist_genres = response_obj['genres']
+            for track in response_obj["tracks"]:
+                top_tracks.append(SpotifyTrack(track))
         except KeyError as key_error:
-            error_message="Unable to get spotify_artist_genres for artist_id '%s' due to missing key %s in response." % (artist_id, key_error)
+            error_message="Unable to get top tracks for artist '%s' due to missing key %s in response." % (artist_id, key_error)
             raise Exception(error_message)
 
-        log_debug("Spotify genres for artist '%s': %s" %  (artist_name, spotify_artist_genres))
+        return top_tracks
 
-        return set(spotify_artist_genres)
+    @_validate_access_token
+    def get_most_popular_artist_album(self, artist_id):
+        most_popular_spotify_artist_album = None
+        max_count = -1
+        artist_albums = self.get_artist_albums(artist_id)
+        for artist_album in artist_albums:
+            artist_album_popularity = artist_album.get_popularity()
+            if artist_album_popularity > max_count:
+                most_popular_spotify_artist_album = artist_album
+                max_count = artist_album_popularity
+
+        return most_popular_spotify_artist_album
+
+    # Returns an album_name for artist_id based on their top tracks, preferring albums over singles
+    # and compilations.
+    @_validate_access_token
+    def get_album_name_from_artist_top_tracks(self, artist_id):
+        # popularity ranges from 0 to 100
+        most_popular_spotify_track_from_album = None
+        most_popular_spotify_track_not_from_album = None
+        artist_top_tracks = self.get_artist_top_tracks(artist_id)
+        for track in artist_top_tracks:
+            album_type = track.get_album().get_type()
+            if album_type == 'album':
+                most_popular_spotify_track_from_album = track
+                break
+            elif not most_popular_spotify_track_not_from_album:
+                most_popular_spotify_track_not_from_album = track
+
+        # Return actual album names before single-based album names, if they exist.
+        if most_popular_spotify_track_from_album:
+            return most_popular_spotify_track_from_album.get_album().get_name()
+        else:
+            return most_popular_spotify_track_not_from_album.get_album().get_name()
