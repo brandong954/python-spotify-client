@@ -32,10 +32,10 @@ def init_spotify(spotify_client_id=None, spotify_client_secret=None, spotify_cal
         except KeyError:
             log_error("Environment variables SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_CALLBACK_URL, and SPOTIFY_AUTH_REDIRECT_URL must be set if not passed to set_app_config().")
 
-    log_debug("SPOTIFY_CLIENT_ID: %s" % SPOTIFY_CLIENT_ID)
-    log_debug("SPOTIFY_CLIENT_SECRET: %s" % spotify_client_secret)
-    log_debug("SPOTIFY_CALLBACK_URL: %s" % SPOTIFY_CALLBACK_URL)
-    log_debug("SPOTIFY_AUTH_REDIRECT_URL: %s" % SPOTIFY_AUTH_REDIRECT_URL)
+    log_verbose("SPOTIFY_CLIENT_ID: %s" % SPOTIFY_CLIENT_ID)
+    log_verbose("SPOTIFY_CLIENT_SECRET: %s" % spotify_client_secret)
+    log_verbose("SPOTIFY_CALLBACK_URL: %s" % SPOTIFY_CALLBACK_URL)
+    log_verbose("SPOTIFY_AUTH_REDIRECT_URL: %s" % SPOTIFY_AUTH_REDIRECT_URL)
 
     SPOTIFY_AUTHORIZATION = base64.b64encode(("%s:%s" % (SPOTIFY_CLIENT_ID, spotify_client_secret)).encode()).decode()
 
@@ -46,13 +46,13 @@ def spotify_callback():
     log("Spotify calling back...")
 
     state = request.args.get("state")
-    log_debug("Spotify returned user state: %s" % state)
+    log_verbose("Spotify returned user state: %s" % state)
 
     spotify_user = SPOTIFY_USERS.get(state)
 
     if spotify_user is not None:
         spotify_user.code = request.args.get("code")
-        log_debug("Spotify returned user code: %s" % spotify_user.code)
+        log_verbose("Spotify returned user code: %s" % spotify_user.code)
 
         if spotify_user.code is None:
             error = request.args.get("error")
@@ -190,7 +190,7 @@ class SpotifyUser:
         spotify_authorization_endpoint = "%s/authorize" % SPOTIFY_ACCOUNTS_URI
         uri = "%s?client_id=%s&response_type=%s&redirect_uri=%s&scope=%s&state=%s" \
             % (spotify_authorization_endpoint, SPOTIFY_CLIENT_ID, response_type, SPOTIFY_CALLBACK_URL, self.scope, self.state)
-        log_debug("Redirect to Spotify authorization service: %s" % uri)
+        log_verbose("Redirect to Spotify authorization service: %s" % uri)
         return redirect(uri)
 
     def set_access_token(self):
@@ -208,8 +208,8 @@ class SpotifyUser:
         else:
             data = {grant_type_data_key:client_credentials_grant_type}
 
-        log_debug("Request Header: %s" % headers)
-        log_debug("Request Data: %s" % data)
+        log_verbose("Request Header: %s" % headers)
+        log_verbose("Request Data: %s" % data)
 
         response = make_request(SPOTIFY_TOKEN_API_ENDPOINT, method="POST", headers=headers, data=data)
         response_obj = get_json_from_response(response)
@@ -219,8 +219,8 @@ class SpotifyUser:
             log_error("%s\n%s" % (error_message, response_obj))
             return False
 
-        log_debug("Response Header: %s" % response.headers)
-        log_debug("Response Data: %s" % response_obj)
+        log_verbose("Response Header: %s" % response.headers)
+        log_verbose("Response Data: %s" % response_obj)
 
         try:
             self.access_token = response_obj['access_token']
@@ -263,7 +263,7 @@ class SpotifyUser:
         else:
             self.spotify_user_object = response_obj
 
-        log_debug("User profile: %s" % self.spotify_user_object)
+        log_verbose("User profile: %s" % self.spotify_user_object)
 
         return True
 
