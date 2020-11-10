@@ -225,7 +225,8 @@ class SpotifyUser:
         try:
             self.access_token = response_obj['access_token']
             self.token_type = response_obj['token_type']
-            self.expiration_date = datetime.now() + timedelta(seconds=response_obj['expires_in'])
+            expiration_buffer_in_seconds = 120
+            self.expiration_date = datetime.now() + timedelta(seconds=(response_obj['expires_in'] - expiration_buffer_in_seconds))
             if data[grant_type_data_key] != client_credentials_grant_type:
                 self.scope = response_obj['scope']
             if data[grant_type_data_key] == authorization_code_grant_type:
