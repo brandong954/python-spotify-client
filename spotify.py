@@ -568,6 +568,49 @@ class SpotifyUser:
 
         return most_popular_spotify_artist_album
 
+    # *** TODO
+    # [INFO] Getting genre for:
+    # 	spotify_artist_id: 4nyfrMLBht2ELwY68gaLhZ
+    # 	artist_name: no devotion
+    # 	album_name: permanence
+    # [INFO] Searching for artist genre...
+    # [DEBUG] Searching Wikipedia for genres...
+    # 172.17.0.3 - - [09/Nov/2020 20:14:56] "GET /search/?spotify_artist_id=4nyfrMLBht2ELwY68gaLhZ&artist_name=No+Devotion&album_name=Permanence HTTP/1.1" 500 -
+    # Traceback (most recent call last):
+    #   File "/usr/local/lib/python3.7/site-packages/flask/app.py", line 2309, in __call__
+    #     return self.wsgi_app(environ, start_response)
+    #   File "/usr/local/lib/python3.7/site-packages/flask/app.py", line 2295, in wsgi_app
+    #     response = self.handle_exception(e)
+    #   File "/usr/local/lib/python3.7/site-packages/flask/app.py", line 1741, in handle_exception
+    #     reraise(exc_type, exc_value, tb)
+    #   File "/usr/local/lib/python3.7/site-packages/flask/_compat.py", line 35, in reraise
+    #     raise value
+    #   File "/usr/local/lib/python3.7/site-packages/flask/app.py", line 2292, in wsgi_app
+    #     response = self.full_dispatch_request()
+    #   File "/usr/local/lib/python3.7/site-packages/flask/app.py", line 1815, in full_dispatch_request
+    #     rv = self.handle_user_exception(e)
+    #   File "/usr/local/lib/python3.7/site-packages/flask/app.py", line 1718, in handle_user_exception
+    #     reraise(exc_type, exc_value, tb)
+    #   File "/usr/local/lib/python3.7/site-packages/flask/_compat.py", line 35, in reraise
+    #     raise value
+    #   File "/usr/local/lib/python3.7/site-packages/flask/app.py", line 1813, in full_dispatch_request
+    #     rv = self.dispatch_request()
+    #   File "/usr/local/lib/python3.7/site-packages/flask/app.py", line 1799, in dispatch_request
+    #     return self.view_functions[rule.endpoint](**req.view_args)
+    #   File "/usr/src/app/application.py", line 1376, in get_genre_handler
+    #     return jsonify({'genre': get_genre(artist_name, album_name, spotify_artist_id)}), 200
+    #   File "/usr/src/app/application.py", line 1332, in get_genre
+    #     artist_genre = find_genre(spotify_artist)
+    #   File "/usr/src/app/application.py", line 1195, in find_genre
+    #     valid_genres = get_wikipedia_genres(spotify_artist, album_name)
+    #   File "/usr/src/app/application.py", line 562, in get_wikipedia_genres
+    #     album_name = SPOTIFY_USER.get_album_name_from_artist_top_tracks(spotify_artist.get_id())
+    #   File "/usr/src/app/lib/spotify.py", line 245, in validate
+    #     return func(self, *args, **kwargs)
+    #   File "/usr/src/app/lib/spotify.py", line 590, in get_album_name_from_artist_top_tracks
+    #     return most_popular_spotify_track_not_from_album.get_album().get_name()
+    # AttributeError: 'NoneType' object has no attribute 'get_album'
+    #
     # Returns an album_name for artist_id based on their top tracks, preferring albums over singles
     # and compilations.
     @_validate_access_token
