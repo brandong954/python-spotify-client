@@ -345,7 +345,7 @@ class SpotifyUser:
                     if unique_names_only:
                         album_name = item['name']
                         if album_name not in albums:
-                        albums.append(album_name)
+                            albums.append(album_name)
                     else:
                         albums.append(self.get_album(item['id']))
                 url = response_obj['next']
