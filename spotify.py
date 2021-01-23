@@ -353,7 +353,7 @@ class SpotifyUser:
                 error_message="Unable to get artist's albums due to missing key %s in response." % key_error
                 raise Exception(error_message)
 
-        log_verbose("Artist albums found on Spotify: %s" % albums)
+        log_verbose("Spotify artist albums found: %s" % albums)
 
         return albums
 
