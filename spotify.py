@@ -322,9 +322,8 @@ class SpotifyUser:
         return SpotifyArtist(response_obj)
 
     @_validate_access_token
-    def get_artist_albums(self, artist_id, include_groups):
+    def get_artist_albums(self, artist_id, include_groups, limit=50):
         albums = []
-        limit = 50
         headers = {'Authorization': "%s %s" % (self.token_type, self.access_token)}
         url = "%s/artists/%s/albums?limit=%d&include_groups=%s" % (SPOTIFY_API_URI, artist_id, limit, include_groups)
 
