@@ -322,14 +322,14 @@ class SpotifyUser:
         return SpotifyArtist(response_obj)
 
     @_validate_access_token
-    def get_artist_albums(self, artist_id, include_groups, limit=50):
+    def get_artist_albums(self, artist_id, include_groups, limit=50, unique_names_only=False):
         albums = []
         headers = {'Authorization': "%s %s" % (self.token_type, self.access_token)}
         url = "%s/artists/%s/albums?limit=%d&include_groups=%s" % (SPOTIFY_API_URI, artist_id, limit, include_groups)
 
         log_debug("Getting Spotify albums for '%s'..." % artist_id)
 
-        while url is not None:
+        while url is not None and len(albums) < limit:
             response = make_request(url, headers=headers)
             response_obj = get_json_from_response(response)
 
@@ -342,7 +342,12 @@ class SpotifyUser:
             try:
                 items = response_obj["items"]
                 for item in items:
-                    albums.append(self.get_album(item['id']))
+                    if unique_names_only:
+                        album_name = item['name']
+                        if album_name not in albums:
+                        albums.append(album_name)
+                    else:
+                        albums.append(self.get_album(item['id']))
                 url = response_obj['next']
             except KeyError as key_error:
                 error_message="Unable to get artist's albums due to missing key %s in response." % key_error
