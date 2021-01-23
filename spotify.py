@@ -322,11 +322,11 @@ class SpotifyUser:
         return SpotifyArtist(response_obj)
 
     @_validate_access_token
-    def get_artist_albums(self, artist_id):
+    def get_artist_albums(self, artist_id, include_groups):
         albums = []
         limit = 50
         headers = {'Authorization': "%s %s" % (self.token_type, self.access_token)}
-        url = "%s/artists/%s/albums?limit=%d&include_groups=album" % (SPOTIFY_API_URI, artist_id, limit)
+        url = "%s/artists/%s/albums?limit=%d&include_groups=%s" % (SPOTIFY_API_URI, artist_id, limit, include_groups)
 
         log_debug("Getting Spotify albums for '%s'..." % artist_id)
 
@@ -539,7 +539,7 @@ class SpotifyUser:
         response_obj = get_json_from_response(response)
 
         if response.status_code != 200:
-            error_message="Unable to queary Spotify for artists' top tracks!"
+            error_message="Unable to query Spotify for artists' top tracks!"
             raise Exception("%s\n%s" % (error_message, response_obj))
 
         log_verbose("Spotify's response: %s" % response_obj)
@@ -554,19 +554,6 @@ class SpotifyUser:
             raise Exception(error_message)
 
         return top_tracks
-
-    @_validate_access_token
-    def get_most_popular_artist_album(self, artist_id):
-        most_popular_spotify_artist_album = None
-        max_count = -1
-        artist_albums = self.get_artist_albums(artist_id)
-        for artist_album in artist_albums:
-            artist_album_popularity = artist_album.get_popularity()
-            if artist_album_popularity > max_count:
-                most_popular_spotify_artist_album = artist_album
-                max_count = artist_album_popularity
-
-        return most_popular_spotify_artist_album
 
     # *** TODO
     # [INFO] Getting genre for:
