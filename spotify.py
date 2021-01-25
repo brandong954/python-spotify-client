@@ -88,17 +88,6 @@ class SpotifyArtist:
         spotify_artist_genres = self.spotify_artist_object['genres']
         return spotify_artist_genres
 
-    def get_albums(self):
-        return SPOTIFY_USER.get_artist_albums(self.get_id())
-
-    def get_album(self, album_name):
-        spotify_albums = []
-        for artist_album in self.get_albums():
-            # an artist can have multiple albums with the same name, so return all of them.
-            if album_name.lower() in artist_album['name'].lower():
-                spotify_albums.append(artist_album)
-        return spotify_albums
-
 class SpotifyAlbum:
     spotify_album_object = None
 
@@ -409,6 +398,15 @@ class SpotifyUser:
         log_verbose("Spotify artist albums found: %s" % albums)
 
         return albums
+
+    def get_artist_album_by_name(self, artist_id, album_name):
+        spotify_albums = []
+        album_name = album_name.lower()
+        for artist_album in self.get_artist_albums(artist_id):
+            # an artist can have multiple albums with the same name, so return all of them.
+            if album_name in artist_album['name'].lower():
+                spotify_albums.append(artist_album)
+        return spotify_albums
 
     @_validate_access_token
     def get_album(self, album_id):
