@@ -88,6 +88,17 @@ class SpotifyArtist:
         spotify_artist_genres = set(self.spotify_artist_object['genres'])
         return spotify_artist_genres
 
+    def get_albums(self):
+        return SPOTIFY_USER.get_artist_albums(self.get_id())
+
+    def get_album(self, album_name):
+        spotify_albums = []
+        for artist_album in self.get_albums():
+            # an artist can have multiple albums with the same name, so return all of them.
+            if album_name.lower() in artist_album['name'].lower():
+                spotify_albums.append(artist_album)
+        return spotify_albums
+
 class SpotifyAlbum:
     spotify_album_object = None
 
@@ -357,7 +368,7 @@ class SpotifyUser:
             return None
 
     @_validate_access_token
-    def get_artist_albums(self, artist_id, include_groups, limit=50, unique_names_only=False):
+    def get_artist_albums(self, artist_id, include_groups='album,single,appears_on,compilation', limit=50, unique_names_only=False):
         albums = []
         headers = {'Authorization': "%s %s" % (self.token_type, self.access_token)}
         url = "%s/artists/%s/albums?limit=%d&include_groups=%s" % (SPOTIFY_API_URI, artist_id, limit, include_groups)
