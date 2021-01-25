@@ -364,7 +364,7 @@ class SpotifyUser:
         return None
 
     @_validate_access_token
-    def get_artist_albums(self, artist_id, include_groups='album,single,appears_on,compilation', limit=50, unique_names_only=False):
+    def get_artist_albums(self, artist_id, include_groups='album,single,appears_on,compilation', limit=50):
         albums = []
         headers = {'Authorization': "%s %s" % (self.token_type, self.access_token)}
         url = "%s/artists/%s/albums?limit=%d&include_groups=%s" % (SPOTIFY_API_URI, artist_id, limit, include_groups)
@@ -384,25 +384,17 @@ class SpotifyUser:
             try:
                 items = response_obj["items"]
                 for item in items:
-                    if unique_names_only:
-                        album_name = item['name']
-                        if album_name not in albums:
-                            albums.append(album_name)
-                    else:
-                        albums.append(self.get_album(item['id']))
+                    albums.append(self.get_album(item['id']))
                 url = response_obj['next']
             except KeyError as key_error:
                 error_message="Unable to get artist's albums due to missing key %s in response." % key_error
                 raise Exception(error_message)
 
-        if unique_names_only:
-            album_names = albums
-        else:
-            album_names = [album.get_name() for album in albums]
+        album_names = [album.get_name() for album in albums]
 
         log_verbose("Spotify artist albums found: %s" % album_names)
 
-        return albums
+        return albums, album_names
 
     def get_artist_album_by_name(self, artist_id, album_name):
         spotify_albums = []
