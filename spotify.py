@@ -339,7 +339,7 @@ class SpotifyUser:
         headers = {'Authorization': "%s %s" % (self.token_type, self.access_token)}
         if not album_name:
             return self.get_most_popular_artist(artist_name)
-        else
+        else:
             url = "%s/search?q=\"%s\"&type=album&limit=50" % (SPOTIFY_API_URI, album_name)
 
             while url is not None:
