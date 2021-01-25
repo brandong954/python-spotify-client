@@ -355,7 +355,7 @@ class SpotifyUser:
                 try:
                     albums = response_obj["albums"]
                     for album in albums['items']:
-                        for artist in album['artists']
+                        for artist in album['artists']:
                             if artist['name'].lower() == artist_name.lower():
                                 return self.get_artist(artist['id'])
                     url = response_obj['next']
