@@ -395,7 +395,12 @@ class SpotifyUser:
                 error_message="Unable to get artist's albums due to missing key %s in response." % key_error
                 raise Exception(error_message)
 
-        log_verbose("Spotify artist albums found: %s" % albums)
+        if unique_names_only:
+            album_names = albums
+        else:
+            album_names = [album.get_name() for album in albums]
+
+        log_verbose("Spotify artist albums found: %s" % album_names)
 
         return albums
 
