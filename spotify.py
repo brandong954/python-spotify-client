@@ -316,7 +316,7 @@ class SpotifyUser:
 
     # TODO We should check the response_obj has what we need for later on.
     @_validate_access_token
-    def get_artist(self, artist_id):
+    def get_artist_by_id(self, artist_id):
         headers = {'Authorization': "%s %s" % (self.token_type, self.access_token)}
         url = "%s/artists/%s" % (SPOTIFY_API_URI, artist_id)
 
@@ -335,37 +335,44 @@ class SpotifyUser:
         return SpotifyArtist(response_obj)
 
     @_validate_access_token
-    def get_artist(self, artist_name, album_name=None):
-        headers = {'Authorization': "%s %s" % (self.token_type, self.access_token)}
-        if not album_name:
-            return self.get_most_popular_artist(artist_name)
+    def get_artist(self, artist_id=None, artist_name=None, album_name=None):
+        if artist_id:
+            return self.get_artist_by_id(artist_id)
+
+        if not artist_name:
+            log_debug("Unable to query Spotify for artist due to missing Spotify ID and artist_name!")
         else:
-            url = "%s/search?q=\"%s\"&type=album&limit=50" % (SPOTIFY_API_URI, album_name)
+            headers = {'Authorization': "%s %s" % (self.token_type, self.access_token)}
+            # Use album_name to validate the requested artist, otherwise return the most popular artist.
+            if not album_name:
+                return self.get_most_popular_artist(artist_name)
+            else:
+                url = "%s/search?q=\"%s\"&type=album&limit=50" % (SPOTIFY_API_URI, album_name)
 
-            while url is not None:
-                response = make_request(url, headers=headers)
-                response_obj = get_json_from_response(response)
+                while url is not None:
+                    response = make_request(url, headers=headers)
+                    response_obj = get_json_from_response(response)
 
-                if response.status_code != 200:
-                    error_message="Unable to search Spotify for albums!"
-                    raise Exception("%s\n%s" % (error_message, response_obj))
+                    if response.status_code != 200:
+                        error_message="Unable to search Spotify for albums!"
+                        raise Exception("%s\n%s" % (error_message, response_obj))
 
-                log_verbose("Spotify's response: %s" % response_obj)
+                    log_verbose("Spotify's response: %s" % response_obj)
 
-                try:
-                    albums = response_obj["albums"]
-                    for album in albums['items']:
-                        for artist in album['artists']:
-                            if artist['name'].lower() == artist_name.lower():
-                                return self.get_artist(artist['id'])
-                    url = response_obj['next']
-                except KeyError as key_error:
-                    error_message="Unable to get Spotify artist for '%s' due to missing key %s in response when searching albums." % (artist_name, key_error)
-                    raise Exception(error_message)
+                    try:
+                        albums = response_obj["albums"]
+                        for album in albums['items']:
+                            for artist in album['artists']:
+                                if artist['name'].lower() == artist_name.lower():
+                                    return self.get_artist(artist_id=artist['id'])
+                        url = response_obj['next']
+                    except KeyError as key_error:
+                        error_message="Unable to get Spotify artist for '%s' due to missing key %s in response when searching albums." % (artist_name, key_error)
+                        raise Exception(error_message)
 
-            log_debug("Unable to find Spotify artist '%s' with album '%s'." % (artist_name, album_name))
+                log_debug("Unable to find Spotify artist '%s' with album '%s'." % (artist_name, album_name))
 
-            return None
+        return None
 
     @_validate_access_token
     def get_artist_albums(self, artist_id, include_groups='album,single,appears_on,compilation', limit=50, unique_names_only=False):
