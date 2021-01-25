@@ -399,7 +399,8 @@ class SpotifyUser:
     def get_artist_album_by_name(self, artist_id, album_name):
         spotify_albums = []
         album_name = album_name.lower()
-        for artist_album in self.get_artist_albums(artist_id):
+        # Only want the first returned value,
+        for artist_album in self.get_artist_albums(artist_id)[0]:
             # an artist can have multiple albums with the same name, so return all of them.
             if album_name in artist_album.get_name().lower():
                 spotify_albums.append(artist_album)
