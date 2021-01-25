@@ -85,7 +85,7 @@ class SpotifyArtist:
         return self.spotify_artist_object['id']
 
     def get_genres(self):
-        spotify_artist_genres = set(self.spotify_artist_object['genres'])
+        spotify_artist_genres = self.spotify_artist_object['genres']
         return spotify_artist_genres
 
     def get_albums(self):
