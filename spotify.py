@@ -571,7 +571,7 @@ class SpotifyUser:
             try:
                 artists = response_obj["artists"]
                 for artist in artists['items']:
-                    if artist['name'] == artist_name and artist['popularity'] > max_popularity_count:
+                    if artist['name'].lower() == artist_name.lower() and artist['popularity'] > max_popularity_count:
                         most_popular_spotify_artist = SpotifyArtist(artist)
                 url = artists['next']
             except KeyError as key_error:
