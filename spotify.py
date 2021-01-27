@@ -573,7 +573,7 @@ class SpotifyUser:
                 for artist in artists['items']:
                     if artist['name'] == artist_name and artist['popularity'] > max_popularity_count:
                         most_popular_spotify_artist = SpotifyArtist(artist)
-                url = response_obj['next']
+                url = artists['next']
             except KeyError as key_error:
                 error_message="Unable to get most popular Spotify artist for '%s' due to missing key %s in response." % (artist_name, key_error)
                 raise Exception(error_message)
