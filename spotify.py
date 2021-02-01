@@ -333,7 +333,7 @@ class SpotifyUser:
     @_validate_access_token
     def get_full_artist_object(self, href):
         headers = {'Authorization': "%s %s" % (self.token_type, self.access_token)}
-        response = make_request(href)
+        response = make_request(href, headers=headers)
         response_obj = get_json_from_response(response)
 
         if response.status_code != 200:
