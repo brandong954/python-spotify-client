@@ -97,6 +97,10 @@ class SpotifyAlbum:
     def get_uri(self):
         return self.spotify_album_object['uri']
 
+    def get_artists(self):
+        spotify_artists = self.spotify_album_object['artists']
+        return [SpotifyArtist(spotify_artist) for spotify_artist in spotify_artists]
+
     def get_name(self):
         return self.spotify_album_object['name']
 
@@ -390,7 +394,7 @@ class SpotifyUser:
                 error_message="Unable to get artist's albums due to missing key %s in response." % key_error
                 raise Exception(error_message)
 
-        album_names = [album.get_name() for album in albums]
+        album_names = set(album.get_name() for album in albums)
 
         log_verbose("Spotify artist albums found: %s" % album_names)
 
