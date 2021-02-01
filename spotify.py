@@ -342,7 +342,7 @@ class SpotifyUser:
 
         log_verbose("Spotify's response: %s" % response_obj)
 
-        return SpotifyArtist(response_object)
+        return SpotifyArtist(response_obj)
 
     @_validate_access_token
     def get_artist(self, artist_id=None, artist_name=None, album_name=None):
