@@ -99,7 +99,7 @@ class SpotifyAlbum:
 
     def get_artists(self):
         spotify_artists = self.spotify_album_object['artists']
-        return [SpotifyArtist(make_request(spotify_artist['href']) for spotify_artist in spotify_artists]
+        return [SpotifyArtist(make_request(spotify_artist['href'])) for spotify_artist in spotify_artists]
 
     def get_name(self):
         return self.spotify_album_object['name']
