@@ -89,7 +89,9 @@ class SpotifyArtist:
         return spotify_artist_genres
 
     def get_full_artist_object(self):
-        return SpotifyArtist(get_json_from_response(make_request(self.spotify_artist_object['href'])))
+        response_object = get_json_from_response(make_request(self.spotify_artist_object['href']))
+        print(str(response_object))
+        return SpotifyArtist(response_object)
 
 class SpotifyAlbum:
     spotify_album_object = None
