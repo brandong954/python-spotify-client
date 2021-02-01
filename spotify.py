@@ -88,6 +88,9 @@ class SpotifyArtist:
         spotify_artist_genres = self.spotify_artist_object['genres']
         return spotify_artist_genres
 
+    def get_full_artist_object(self):
+        return SpotifyArtist(make_request(self.spotify_artist_object['href']))
+
 class SpotifyAlbum:
     spotify_album_object = None
 
@@ -326,9 +329,6 @@ class SpotifyUser:
             raise Exception("Failed to get artist '%s': %s" % (artist_id, response_obj))
 
         return SpotifyArtist(response_obj)
-
-    def get_artist_from_href(self, href):
-        return SpotifyArtist(make_request(href))
 
     @_validate_access_token
     def get_artist(self, artist_id=None, artist_name=None, album_name=None):
