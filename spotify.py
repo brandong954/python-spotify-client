@@ -327,6 +327,9 @@ class SpotifyUser:
 
         return SpotifyArtist(response_obj)
 
+    def get_artist_from_href(self, href):
+        return SpotifyArtist(make_request(href))
+
     @_validate_access_token
     def get_artist(self, artist_id=None, artist_name=None, album_name=None):
         if artist_id:
