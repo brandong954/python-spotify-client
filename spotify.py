@@ -577,6 +577,9 @@ class SpotifyUser:
         headers = {'Authorization': "%s %s" % (self.token_type, self.access_token)}
         url = "%s/search?q=\"%s\"&type=artist&limit=50" % (SPOTIFY_API_URI, artist_name)
 
+        # popularity can be 0 for an artist
+        max_popularity_count = -1
+
         while url is not None:
             response = make_request(url, headers=headers)
             response_obj = get_json_from_response(response)
@@ -587,13 +590,13 @@ class SpotifyUser:
 
             log_verbose("Spotify's response: %s" % response_obj)
 
-            # popularity can be 0 for an artist
-            max_popularity_count = -1
             try:
                 artists = response_obj["artists"]
                 for artist in artists['items']:
-                    if artist['name'].lower() == artist_name.lower() and artist['popularity'] > max_popularity_count:
-                        most_popular_spotify_artist = SpotifyArtist(artist)
+                    artist_populartity = artist['popularity']
+                    if artist['name'].lower() == artist_name.lower() and artist_populartity > max_popularity_count:
+                        max_popularity_count = artist_populartity
+                        most_popular_spotify_artist = artist
                 url = artists['next']
             except KeyError as key_error:
                 error_message="Unable to get most popular Spotify artist for '%s' due to missing key %s in response." % (artist_name, key_error)
@@ -601,6 +604,9 @@ class SpotifyUser:
 
         if not most_popular_spotify_artist:
             log_debug("Unable to find a popular Spotify artist for '%s'." % artist_name)
+        else:
+            log_debug("Most popular Spotify artist found for '%s': %s" % (artist_name, most_popular_spotify_artist))
+            most_popular_spotify_artist = SpotifyArtist(most_popular_spotify_artist)
 
         return most_popular_spotify_artist
 
